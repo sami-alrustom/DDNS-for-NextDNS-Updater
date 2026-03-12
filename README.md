@@ -39,7 +39,13 @@ Compatible with:
 * Debian
 * VPS environments
 * Homelab servers
-* Proxmox hosts
+* Proxmox hosts LXC/VMs
+
+Hardware:
+Recommended hardware requirements
+* Ram 1GB
+* CPU: 1 Core
+* Disk Size: 8GB
 
 ---
 
