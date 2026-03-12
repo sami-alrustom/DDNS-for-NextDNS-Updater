@@ -2,82 +2,98 @@
 
 ![Linux](https://img.shields.io/badge/platform-linux-blue)
 ![Bash](https://img.shields.io/badge/script-bash-green)
+![Docker](https://img.shields.io/badge/docker-supported-blue)
 ![License](https://img.shields.io/badge/license-MIT-yellow)
 ![Status](https://img.shields.io/badge/status-stable-success)
 
-A lightweight **Bash-based Dynamic DNS updater for NextDNS** that automatically updates your public IP address using a cron job.
+A lightweight **Dynamic DNS updater for NextDNS** written in Bash.
+This script automatically updates your **NextDNS Linked IP** when your public IP changes.
 
-This project was created for **Linux servers and homelabs** where the public IP may change periodically. The script keeps your NextDNS configuration updated so DNS filtering continues working properly.
+Designed for **Linux servers, VPS environments, and homelabs**.
 
 ---
 
-## Features
+# Features
 
-* Automatic public IP updates to NextDNS
-* Simple Bash script
+* Automatic NextDNS IP updates
 * Works on most Linux distributions
-* Cron-based automation
+* Cron automation support
+* systemd timer support
+* Docker container support
 * Timestamped logging
 * Log rotation support
-* Lightweight (only requires `curl`)
+* Lightweight (bash + curl)
 
 ---
 
-## Requirements
+# Requirements
 
 * Linux server (Ubuntu / Debian recommended)
 * `curl`
-* `cron`
-* A NextDNS account
+* `cron` or `systemd`
+* NextDNS account
 
-Works with systems like:
+Compatible with:
 
 * Ubuntu Server
 * Debian
-* Proxmox
 * VPS environments
 * Homelab servers
+* Proxmox hosts
 
 ---
 
-## How It Works
+# Architecture
 
-NextDNS provides an endpoint that updates the **Linked IP** associated with your configuration.
+This project keeps the **NextDNS Linked IP updated automatically**.
 
-The script:
+Flow of operation:
 
-1. Sends a request to the NextDNS update endpoint.
-2. Logs the result with timestamp.
-3. Runs automatically every few minutes using cron.
-
-Example update endpoint:
+Home Network
+│
+│ Public IP (ISP)
+▼
+Linux Server / VPS
+│
+│ Cron / systemd Timer / Docker
+▼
+NextDNS Update Script
+│
+│ HTTPS request
+▼
+NextDNS API Endpoint
 
 ```
 https://link-ip.nextdns.io/YOUR_TOKEN
 ```
 
----
+▼
+NextDNS Linked IP Updated
 
-## Installation
-
-### 1. Clone the repository
-
-```
-git clone https://github.com/YOURUSERNAME/nextdns-ddns-updater.git
-cd nextdns-ddns-updater
-```
+This ensures your NextDNS configuration always sees the correct public IP.
 
 ---
 
-### 2. Edit the script
+# Installation
 
-Open the script and replace the token with your NextDNS update link.
+## 1 Clone the Repository
+
+```
+git clone https://github.com/sami-alrustom/DDNS-for-NextDNS-Updater.git
+cd DDNS-for-NextDNS-Updater
+```
+
+---
+
+## 2 Configure Your NextDNS Link
+
+Edit the script and replace the token with your NextDNS update link.
 
 ```
 nano update-nextdns.sh
 ```
 
-Change:
+Update this line:
 
 ```
 URL="https://link-ip.nextdns.io/YOUR_TOKEN"
@@ -85,68 +101,97 @@ URL="https://link-ip.nextdns.io/YOUR_TOKEN"
 
 ---
 
-### 3. Install the script
+# Cron Setup (Simple Method)
+
+Install the script:
 
 ```
 sudo cp update-nextdns.sh /usr/local/bin/
 sudo chmod +x /usr/local/bin/update-nextdns.sh
 ```
 
----
-
-### 4. Create the log file
+Create log file:
 
 ```
 sudo touch /var/log/nextdns-ddns.log
 sudo chmod 600 /var/log/nextdns-ddns.log
 ```
 
----
-
-### 5. Add the cron job
+Edit cron:
 
 ```
 sudo crontab -e
 ```
 
-Add this line:
+Add:
 
 ```
 */5 * * * * /usr/local/bin/update-nextdns.sh
 ```
 
-This will update your IP every **5 minutes**.
+This will update your NextDNS IP every **5 minutes**.
 
 ---
 
-### 6. (Optional) Enable log rotation
+# systemd Timer (Recommended Modern Method)
 
-Copy the logrotate configuration:
+Copy the service files:
 
 ```
-sudo cp logrotate-nextdns-ddns /etc/logrotate.d/nextdns-ddns
+sudo cp systemd/nextdns-ddns.service /etc/systemd/system/
+sudo cp systemd/nextdns-ddns.timer /etc/systemd/system/
 ```
 
-This will:
+Reload systemd:
 
-* rotate logs weekly
-* keep 4 old logs
-* compress old logs
+```
+sudo systemctl daemon-reload
+```
+
+Enable timer:
+
+```
+sudo systemctl enable --now nextdns-ddns.timer
+```
+
+Check timers:
+
+```
+systemctl list-timers
+```
 
 ---
 
-## Testing
+# Docker Version
 
-Run the script manually:
+You can also run the updater in Docker.
 
-```
-sudo /usr/local/bin/update-nextdns.sh
-```
-
-Check the log file:
+## Build container
 
 ```
-tail -f /var/log/nextdns-ddns.log
+docker build -t nextdns-ddns ./docker
+```
+
+## Run container
+
+```
+docker run -d \
+--name nextdns-ddns \
+nextdns-ddns
+```
+
+The container will run the updater every **5 minutes**.
+
+---
+
+# Logging
+
+Every update attempt is logged.
+
+Log file location:
+
+```
+/var/log/nextdns-ddns.log
 ```
 
 Example output:
@@ -157,27 +202,63 @@ Example output:
 
 ---
 
-## Verifying NextDNS
+# Log Rotation
 
-Log into the NextDNS dashboard and confirm your **Linked IP** is updated.
+To prevent the log file from growing indefinitely, install logrotate configuration:
 
-You should see your current public IP and the **Last Seen timestamp** updating periodically.
+```
+sudo cp logrotate-nextdns-ddns /etc/logrotate.d/nextdns-ddns
+```
+
+Log rotation settings:
+
+* Weekly rotation
+* Keep last 4 logs
+* Compress old logs
 
 ---
 
-## Project Structure
+# Testing
+
+Run the script manually:
 
 ```
-nextdns-ddns-updater
+sudo /usr/local/bin/update-nextdns.sh
+```
+
+Check logs:
+
+```
+tail -f /var/log/nextdns-ddns.log
+```
+
+Verify in your NextDNS dashboard that your **Linked IP** has updated.
+
+---
+
+# Repository Structure
+
+```
+DDNS-for-NextDNS-Updater
 │
 ├── update-nextdns.sh
 ├── logrotate-nextdns-ddns
-└── README.md
+├── README.md
+│
+├── docs
+│   └── architecture.md
+│
+├── systemd
+│   ├── nextdns-ddns.service
+│   └── nextdns-ddns.timer
+│
+└── docker
+    └── Dockerfile
 ```
 
 ---
 
-## Author
+# Author
 
 **Sami Alrustom**
 
@@ -186,6 +267,7 @@ Homelab & Networking Enthusiast
 
 ---
 
-## License
+# License
 
-This project is licensed under the MIT License.
+This project is licensed under the **MIT License**.
+
