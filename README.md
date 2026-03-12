@@ -6,11 +6,9 @@
 ![License](https://img.shields.io/badge/license-MIT-yellow)
 ![Status](https://img.shields.io/badge/status-stable-success)
 
-A lightweight **Dynamic DNS updater for NextDNS** written in Bash.
+A lightweight Bash-based Dynamic DNS updater for NextDNS that automatically updates your Linked IP when your public IP changes.
 
-This script automatically updates your **NextDNS Linked IP** when your public IP changes.
-
-Designed for **Linux servers, VPS environments, and homelabs**.
+Designed for Linux servers, VPS environments, and homelabs.
 
 ---
 
@@ -198,7 +196,13 @@ Log file location:
 Example output:
 
 ```
-2026-02-27 03:36:59 [SUCCESS] IP Updated: 204.244.153.197
+root@nextDNS-DDNS:~# tail -n 5 /var/log/nextdns-ddns.log
+2026-03-12 18:25:01 [SUCCESS] IP Updated: 65.254.64.177
+2026-03-12 18:30:02 [SUCCESS] IP Updated: 65.254.64.177
+2026-03-12 18:35:01 [SUCCESS] IP Updated: 65.254.64.177
+2026-03-12 18:40:01 [SUCCESS] IP Updated: 65.254.64.177
+2026-03-12 18:45:01 [SUCCESS] IP Updated: 65.254.64.177
+
 ```
 
 ---
