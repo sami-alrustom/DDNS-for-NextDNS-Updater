@@ -1,0 +1,6 @@
+[Unit]
+Description=NextDNS DDNS Updater
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/update-nextdns.sh
